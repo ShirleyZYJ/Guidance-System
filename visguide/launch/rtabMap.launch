@@ -5,7 +5,9 @@
     <arg name="localization"            default="true"/>
     <arg     if="$(arg localization)" name="rtabmap_args"  default=""/>
     <arg unless="$(arg localization)" name="rtabmap_args"  default="--delete_db_on_start"/>
-    <arg name="database_path" default=""/>
+
+    <arg     if="$(arg localization)" name="database_path"  default=""/>
+    <arg unless="$(arg localization)" name="database_path"  default="~/.ros/rtabmap.db"/>
     <!-- <node name="rtabmap" pkg="rtabmap_ros" type="rgbd_odometry" output="screen">
           <param name="frame_id"            type="string" value="base_link"/>
           <param name="approx_sync"        type="bool" value="false"/> 
@@ -31,7 +33,7 @@
           <remap from="rgb/camera_info" to="/visguide/zed_node/rgb/camera_info" />
           <remap from="odom"            to="/visguide/zed_node/odom" />
           
-          <param name="RGBD/SavedLocalizationIgnored" type="bool" value="true"/>
+          <param name="RGBD/SavedLocalizationIgnored" type="bool" value="false"/>
 
           <!-- output -->
           <!-- <remap from="grid_map" to="/map"/> -->
@@ -56,7 +58,7 @@
           <param name="queue_size" type="int" value="30"/>
           <param name="Grid/FromDepth"                       type="string"      value="true"/>
           <param name="Grid/RangeMax"                        type="string"      value="3"/>
-          <param name="Grid/CellSize"                       type="string"      value="0.01" />
+          <param name="Grid/CellSize"                       type="string"      value="0.1" />
           <param name="Grid/MaxObstacleHeight"               type="string"      value="1" />
           <param name="GridGlobal/OccupancyThr"              type="string"      value="0.65" />
           <param name="Grid/NoiseFilteringRadius"            type="string"      value="0.5"/>
@@ -65,8 +67,25 @@
           <param name="SURF/HessianThreshold"                type="int"         value="100"/>
 <!--      <param name="Vis/MaxDepth"                         type="int"         value="1"/> -->
           <param name="RGBD/LoopClosureReextractFeatures"    type="bool"        value="true"/>
-          <param name="Vis/BundleAdjustment"                         type="int"         value="1"/>
+          <param name="Vis/BundleAdjustment"                 type="int"         value="1"/>
 
+          <param name="Odom/Strategy"                       type="int"      value="5"/>  <!-- Not working-->
+
+          
+          <!-- <param name="Rtabmap/LoopThr"                     type="string"      value="0.05"/> -->
+          <!-- <param name="Kp/MaxFeatures"                      type="int"      value="1300"/> -->
+          <!-- <param name="RGBD/AngularUpdate"                  type="string"      value="0.5"/> -->
+          <!-- <param name="RGBD/ProximityMaxGraphDepth"         type="int"      value="20"/> -->
+
+          <!--ORB params-->
+          <param name="ORB/ScaleFactor"                 type="string"      value="1.1"/>
+          <param name="ORB/NLevels"                 type="int"      value="12"/>
+          <param name="ORB/EdgeThreshold"                 type="int"      value="12"/>
+          <param name="ORB/FirstLevel"                 type="int"      value="0"/>
+          <param name="ORB/WTA_K"                 type="int"      value="2"/>
+          <param name="ORB/ScoreType"                 type="int"      value="0"/>
+          <param name="ORB/PatchSize"                 type="int"      value="15"/>
+          <param name="ORB/Gpu"                 type="string"      value="true"/>
 
           <!-- localization mode -->
           <param     if="$(arg localization)"  name="Mem/IncrementalMemory" type="string" value="false"/>

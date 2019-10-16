@@ -11,6 +11,7 @@
 	</group>
 	<!-- RTAB-map Node-->
     <include file="$(find visguide)/launch/rtabMap.launch">
+ 
       <!-- <arg name="rtabmap_args"                  value="delete_db_on_start" />
       <arg name="rgb_topic"               		  value="/$(arg pkg_namespace)/$(arg zed_node_name)/rgb/image_rect_color" />
       <arg name="depth_topic"             		  value="/$(arg pkg_namespace)/$(arg zed_node_name)/depth/depth_registered" />
@@ -23,6 +24,7 @@
       <arg name="rviz"                          value="false" />
       <arg name="rtabmapviz" 			              value="false" />
       <arg name="localization"                  value="false"/> -->
+
   </include>
 <!-- <include file="$(find rtabmap_ros)/launch/rgbd_mapping.launch">
       <arg name="rtabmap_args"                  value="delete_db_on_start" />

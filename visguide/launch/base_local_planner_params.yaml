@@ -1,22 +1,13 @@
-
-base_global_planner: navfn/NavfnROS
-base_local_planner: base_local_planner/TrajectoryPlannerROS
-
 TrajectoryPlannerROS:
 
   # Current limits based on AZ3 standalone configuration.
-  
-  
-  acc_lim_x:  2.5
-  acc_lim_y:  0.0
-  acc_lim_theta: 3.20
-
-  max_vel_x:  0.300
-  min_vel_x:  0.05
-
-
+  acc_lim_x:  0.75
+  acc_lim_y:  0.75
+  acc_lim_theta: 4.00
+  max_vel_x:  0.500
+  min_vel_x:  0.212
   max_rotational_vel: 0.550
-  min_in_place_rotational_vel: 0.5
+  min_in_place_rotational_vel: 0.15
   escape_vel: -0.10
   holonomic_robot: false
 

@@ -5,7 +5,6 @@ footprint_padding: 0.003 #
 inflation_radius: 0.55 #
 transform_tolerance: 1 #
 controller_patience: 2.0 #
-
 NavfnROS: #
     allow_unknown: true #
 recovery_behaviors: [ #

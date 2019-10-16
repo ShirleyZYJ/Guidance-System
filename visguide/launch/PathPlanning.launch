@@ -34,9 +34,6 @@
         <!-- <remap from="current_goal" to="/move_base_simple/goal"/> -->
 
         <param name="controller_frequency" value="10.0"/>
-        <!-- <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/> -->
-        <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
-
         <rosparam file="$(find visguide)/launch/costmap_common_params.yaml" command="load" ns="global_costmap" />
         <rosparam file="$(find visguide)/launch/costmap_common_params.yaml" command="load" ns="local_costmap" />
         <rosparam file="$(find visguide)/launch/local_costmap_params.yaml" command="load" />

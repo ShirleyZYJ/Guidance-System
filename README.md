@@ -19,10 +19,12 @@ https://github.com/stereolabs/zed-ros-wrapper
 
 - Install cv_bridge in the ros workspace
 Set the following variables while calling cmake
->cmake 
+```
+$ cmake 
 -DPYTHON_EXECUTABLE=/usr/bin/python3
 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m 
 -DPYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so ../
+```
 
 - Setup the "semantic-segmentation-pytorch"
 Install python packages - pytorch, scipy(v1.1.0), numpy, torchvision, yacs, tqdm

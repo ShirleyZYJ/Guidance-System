@@ -44,8 +44,8 @@ Put the rtabmap_ros && visguide package in your ros workspace and run "catkin_ma
 
 Note: To run the rtabmap and zed camera seperately run (change the package namespace)
 ```
-> roslaunch visguide rtabmap.launch
-> roslaunch visguide zedm.launch 
+$ roslaunch visguide rtabmap.launch
+$ roslaunch visguide zedm.launch 
 ```
 
 4. To run the path-planning and text to voice command

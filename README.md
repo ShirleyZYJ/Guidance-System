@@ -62,3 +62,10 @@ $ rosrun visguide visguide_node2
 ```
 $ rviz
 ```
+
+5. To record svo file
+```
+$ roslaunch zed_wrapper zed.launch
+$ rosservice call /zed/zed_node/start_svo_recording svo_filename:= /path/to/file.svo
+$ rosservice call /zed/zed_node/stop_svo_recording
+```

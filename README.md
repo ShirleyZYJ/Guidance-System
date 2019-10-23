@@ -37,10 +37,13 @@ Put the rtabmap_ros && visguide package in your ros workspace and run "catkin_ma
 ### Usage
 
 2. Run semantic segmentaion
-> rosrun visguide segment.py
-
+```
+$ rosrun visguide segment.py
+```
 3. To run the rtabmap and zed-mini camera 
-> roslaunch visguide visguide.launch
+```
+$ roslaunch visguide visguide.launch
+```
 
 Note: To run the rtabmap and zed camera seperately run (change the package namespace)
 ```
@@ -49,7 +52,11 @@ $ roslaunch visguide zedm.launch
 ```
 
 4. To run the path-planning and text to voice command
-> rosrun visguide visguide_node2
+```
+$ rosrun visguide visguide_node2
+```
 
 5. For visualisation
->rviz
+```
+$ rviz
+```

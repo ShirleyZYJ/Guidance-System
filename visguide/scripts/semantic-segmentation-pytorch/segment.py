@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import numpy as np
 import torch
 import torch.nn as nn
@@ -17,7 +17,7 @@ from cv_bridge import CvBridge
 from utils import colorEncode
 from scipy.io import loadmat
 img = None
-colors = loadmat('/home/crrl/crrl_ws/src/visguide/scripts/semantic-segmentation-pytorch/data/color150.mat')['colors']
+colors = loadmat('/home/ghost/ghost2/src/visguide/scripts/semantic-segmentation-pytorch/data/color150.mat')['colors']
 bridge = CvBridge()
 
 #i = 0
@@ -41,8 +41,11 @@ def callback(data):
 
 		seg[:,:,0] = ind
 		im = bridge.cv2_to_imgmsg(seg, "mono8")
+		im_label = bridge.cv2_to_imgmsg(seg,encoding='32SC1')
 		im.header = data.header
+		im_label.header = data.header
 		pub.publish(im)
+		pub_label.publish(im_label.header)
 		#stop = timeit.default_timer()
 		#print(stop-start)
 
@@ -55,27 +58,29 @@ builder = ModelBuilder()
 net_encoder = builder.build_encoder(
         arch='resnet18dilated',
         fc_dim=512,
-		weights="/home/crrl/crrl_ws/src/visguide/scripts/semantic-segmentation-pytorch/ckpt/baseline-resnet18dilated-c1_deepsup/encoder_epoch_2.pth")
+		weights="/home/ghost/ghost2/src/visguide/scripts/semantic-segmentation-pytorch/ckpt/baseline-resnet18dilated-c1_deepsup/encoder_epoch_2.pth")
 
 net_decoder = builder.build_decoder(
         arch='c1_deepsup',
         fc_dim=512,
         num_class=12,
-        weights="/home/crrl/crrl_ws/src/visguide/scripts/semantic-segmentation-pytorch/ckpt/baseline-resnet18dilated-c1_deepsup/decoder_epoch_2.pth",
+        weights="/home/ghost/ghost2/src/visguide/scripts/semantic-segmentation-pytorch/ckpt/baseline-resnet18dilated-c1_deepsup/decoder_epoch_2.pth",
 		use_softmax=True)
+
 
 crit = nn.NLLLoss(ignore_index=-1)
 segmentation_module = SegmentationModule(net_encoder, net_decoder, crit)
 segmentation_module.half()
 segmentation_module.cuda()
 segmentation_module.eval()
-
+print('checkpoint 1')
 rospy.init_node('Semantic_segmentation', anonymous=True)
-rospy.Subscriber('/visguide/zed_node/rgb/image_rect_color', Image, callback)
+print('checkpoint 2')
+rospy.Subscriber('/visguide/zed_node/rgb/image_rect_color', Image, callback)					#Make sure that the topic name is same as given in the rtabmap.launch
+print('checkpoint 3')
 pub=rospy.Publisher('/visguide/zed_node/seg/image_rect_color', Image, queue_size=30)
+pub_label=rospy.Publisher('/visguide/zed_node/label/image_rect_color', Image, queue_size=30)			#Make sure that the topic name is same as given in the rtabmap.launch
+print('checkpoint 4')
 rospy.spin()
+print('checkpoint 5')
 #callback(0)
-
-
-
-

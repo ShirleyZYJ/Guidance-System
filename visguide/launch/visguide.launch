@@ -37,6 +37,6 @@
       <arg name="odom_topic"                    value="/$(arg pkg_namespace)/$(arg zed_node_name)/odom" />
       <arg name="rviz"                          value="false" />
     </include> -->
-<include file="$(find visguide)/launch/PathPlanning.launch" />
 
+<!-- <include file="$(find visguide)/launch/landmark.launch"/> -->
 </launch>

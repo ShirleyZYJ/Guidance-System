@@ -6,7 +6,7 @@
     <!-- Camera Model -->
     <arg name="camera_model"                        default="zedm" /> <!-- 'zed' or 'zedm' -->
     <!-- Load SVO file -->
-    <arg name="svo_file"                            default="$(find visguide)/data_30fps.svo" /><!--default="$(find visguide)/data.svo"> -->
+    <arg name="svo_file"                            default="/media/crrl/ssd/svo/data_30fps.svo" /><!--default="$(find visguide)/data.svo"> -->
     <!-- Remote stream -->
     <arg name="stream"                              default="" /> <!-- <arg name="stream" default="<ip_address>:<port>"> -->
     <!-- Publish ZED urdf -->

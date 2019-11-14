@@ -38,26 +38,26 @@
   <!-- COORDINATES -->
   <node pkg="nodelet" type="nodelet" name="label_mask"
   	args="load jsk_pcl_utils/LabelToClusterPointIndices $(arg MANAGER)">
-    <remap from="~input" to="visguide/zed_node/label/image_rect_color"/>
-    <remap from="~output" to="visguide/cluster_points"/>
+    <remap from="~input" to="/visguide/zed_node/label/image_rect_color"/>
+    <remap from="~output" to="/visguide/cluster_points"/>
   </node>
 
   <node pkg="nodelet" type="nodelet" name="cluster_decomposer"
   	args="load jsk_pcl/ClusterPointIndicesDecomposer $(arg MANAGER)">
     <remap from="~input" to="$(arg point_cloud_topic)"/>
-    <remap from="~target" to="visguide/cluster_points"/>
+    <remap from="~target" to="/visguide/cluster_points"/>
     <rosparam>
       approximate_sync: true
 
       <!-- TARGET FRAME -->
-      align_boxes: true
-      align_boxes_with_plane: false
       target_frame_id: map
 
       <!-- PUBLISH TF -->
       publish_tf: true
-      tf_prefix: yolo_
-    </rosparam>
+    
+      </rosparam>
   </node>
+
+  <node pkg="visguide" type="detection_collector.py" name="detection_collector" output="screen"/>
 
 </launch>

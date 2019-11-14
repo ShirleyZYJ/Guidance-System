@@ -1,0 +1,10 @@
+<launch>
+  <arg name="visual_odom" default="true" doc="Use ZED visual odometry"/>
+
+  <!-- <include file="$(find turtlebot3_bringup)/launch/turtlebot3_robot.launch"/> -->
+
+  <!-- <include file="$(find turtlebot3_slam_3d)/launch/publish_model.launch"/> -->
+
+  <!-- <node pkg="tf" type="static_transform_publisher" name="tf_transform"
+	args="0 0 0 0 0 0 /zed_camera_link /zed_camera_center 100"/> -->
+</launch>

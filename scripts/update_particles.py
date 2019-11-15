@@ -8,6 +8,7 @@ from detection_clustering import DetectionClustering
 from geometry_msgs.msg import PoseArray, Pose
 from yaml import load
 
+#Initial points ------------------------------------
 counter = 0
 poses = []
 file =  open('/home/ghost/Code/path.data', 'rb')
@@ -17,7 +18,10 @@ new_poses = []
 for i in range(0, len(poses), 5):
     new_poses.append(poses[i])
 poses = new_poses.copy()
+# -------------------------------------------------------------------
 
+
+# Global Landmarks --------------------------------------------------
 detected = {}
 detection_names = rospy.get_param('/darknet_ros/yolo_model/detection_classes/names')
 file = open('/home/ghost/.ros/detections_dbscan.db', 'r')
@@ -29,10 +33,10 @@ for name, pos in global_detection.items():
             global_detected[name].append(p)
         else:
             global_detected[name] = p
+#---------------------------------------------------------------------
 
-#print(global_detected)
 
-
+# Particle distance form global landmarks ----------------------------
 def dist_from_landmarks(cur_pos):
     part_id = {}
     for name, pos in global_detected:
@@ -42,7 +46,10 @@ def dist_from_landmarks(cur_pos):
             min_dist = min(min_dist, dist)
         part_id[name] = min_dist
     return part_id
+#----------------------------------------------------------------------
 
+
+# Weight of each particle ---------------------------------------------
 def dist_between_part(part1_id, part2_id):
     dist = 0
     for name, pos in global_detected:
@@ -50,13 +57,21 @@ def dist_between_part(part1_id, part2_id):
             dist = dist + (part1_id[name] - part2_id[name])^2
     dist = sqrt(dist)
     return dist
+# ---------------------------------------------------------------------
 
+
+# Resample particle respective to their weights -----------------------
 def resample_particles(particles):
     do_stuff = 0
+# ---------------------------------------------------------------------
 
+
+# Particle filter main ------------------------------------------------
 def compare(clusters, particles_poses):
     for i in range(len(particles_poses)):
         do_stuff = 0
+# ---------------------------------------------------------------------
+
 
 def display_particles(poses_pub):
     markerArray = MarkerArray()
@@ -101,9 +116,14 @@ def callback(data):
         dc = DetectionClustering(detected, min_samples=1)
         #print([x, y])
         #print(poses[1])
+
+        
         for i in range(len(poses)):
             old_poses.append([poses[i][0] + x, poses[i][1] + y])
+        
+        
         display_particles(old_poses)
+        counter = 0
     counter += 1
 
 def update_key(key, val):

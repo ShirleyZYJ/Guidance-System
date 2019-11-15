@@ -4,6 +4,9 @@ import rospy
 from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker, MarkerArray
 import pickle
+from detection_clustering import DetectionClustering
+from geometry_msgs.msg import PoseArray, Pose
+from yaml import load
 
 counter = 0
 poses = []
@@ -14,6 +17,46 @@ new_poses = []
 for i in range(0, len(poses), 5):
     new_poses.append(poses[i])
 poses = new_poses.copy()
+
+detected = {}
+detection_names = rospy.get_param('/darknet_ros/yolo_model/detection_classes/names')
+file = open('/home/ghost/.ros/detections_dbscan.db', 'r')
+global_detection = load(file)
+global_detected = {}
+for name, pos in global_detection.items():
+    for p in pos:
+        if(name in global_detected):
+            global_detected[name].append(p)
+        else:
+            global_detected[name] = p
+
+#print(global_detected)
+
+
+def dist_from_landmarks(cur_pos):
+    part_id = {}
+    for name, pos in global_detected:
+        min_dist = 1000000
+        for p in pos:
+            dist = sqrt((p.x - cur_pos[0])^2 + (p.y - cur_pos[1]))
+            min_dist = min(min_dist, dist)
+        part_id[name] = min_dist
+    return part_id
+
+def dist_between_part(part1_id, part2_id):
+    dist = 0
+    for name, pos in global_detected:
+        if(name in part1_id):
+            dist = dist + (part1_id[name] - part2_id[name])^2
+    dist = sqrt(dist)
+    return dist
+
+def resample_particles(particles):
+    do_stuff = 0
+
+def compare(clusters, particles_poses):
+    for i in range(len(particles_poses)):
+        do_stuff = 0
 
 def display_particles(poses_pub):
     markerArray = MarkerArray()
@@ -55,6 +98,7 @@ def callback(data):
     #print([x, y])
     if(counter % 5 == 0):
         old_poses = []
+        dc = DetectionClustering(detected, min_samples=1)
         #print([x, y])
         #print(poses[1])
         for i in range(len(poses)):
@@ -62,7 +106,24 @@ def callback(data):
         display_particles(old_poses)
     counter += 1
 
+def update_key(key, val):
+    global detected
+    if(key in detected):
+        detected[key].append(val)
+    else:
+        detected[key] = [val]
+
+def collect(msg):
+    global detection_names
+    for i, pose in enumerate(msg.poses):
+        if(pose != Pose()):
+            pos = pose.position
+            val = [pos.x, pos.y, pos.z]
+            key = detection_names[i]
+            update_key(key, val)
+
 rospy.init_node('update_particles', anonymous=True)
-rospy.Subscriber('/stereo/odom', Odometry, callback)
 map_publisher = rospy.Publisher('visualization_marker_array', MarkerArray, queue_size=10)
+rospy.Subscriber('/stereo/odom', Odometry, callback)
+rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, collect)
 rospy.spin()

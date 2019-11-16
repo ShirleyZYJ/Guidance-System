@@ -7,9 +7,18 @@ import pickle
 from detection_clustering import DetectionClustering
 from geometry_msgs.msg import PoseArray, Pose
 from yaml import load
+from pfilter import ParticleFilter, gaussian_noise, squared_error, independent_sample
+import numpy as np
+import math
 
+class customPose(object):
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+
+        
 #Initial points ------------------------------------
-counter = 0
+counter = 1
 poses = []
 file =  open('/home/ghost/Code/path.data', 'rb')
 poses = pickle.load(file)
@@ -17,7 +26,7 @@ file.close()
 new_poses = []
 for i in range(0, len(poses), 5):
     new_poses.append(poses[i])
-poses = new_poses.copy()
+#poses = new_poses.copy()
 # -------------------------------------------------------------------
 
 
@@ -32,47 +41,63 @@ for name, pos in global_detection.items():
         if(name in global_detected):
             global_detected[name].append(p)
         else:
-            global_detected[name] = p
+            global_detected[name] = [p]
 #---------------------------------------------------------------------
 
 
-# Particle distance form global landmarks ----------------------------
-def dist_from_landmarks(cur_pos):
-    part_id = {}
-    for name, pos in global_detected:
-        min_dist = 1000000
-        for p in pos:
-            dist = sqrt((p.x - cur_pos[0])^2 + (p.y - cur_pos[1]))
-            min_dist = min(min_dist, dist)
-        part_id[name] = min_dist
+# Particle distance form global landmarks(person) ----------------------------
+def dist_from_landmarks(cur_pos, landmarks):
+    part_id = []
+    for p in landmarks['person']:
+        #print(p)
+        #print(cur_pos)
+        #print('--------------')
+        dist = math.sqrt(math.pow((p[0] - cur_pos[0]), 2) + math.pow((p[1] - cur_pos[1]), 2))
+        part_id.append(dist)
     return part_id
 #----------------------------------------------------------------------
 
 
 # Weight of each particle ---------------------------------------------
-def dist_between_part(part1_id, part2_id):
+def get_weight(part1_id, part2_id):
     dist = 0
-    for name, pos in global_detected:
-        if(name in part1_id):
-            dist = dist + (part1_id[name] - part2_id[name])^2
-    dist = sqrt(dist)
-    return dist
+    part1_id = np.asarray(part1_id)
+    wt = 0
+    for i in range(len(part2_id)):
+        wt += np.min(np.abs(np.subtract(part1_id, part2_id[i])))
+    return wt
 # ---------------------------------------------------------------------
 
 
 # Resample particle respective to their weights -----------------------
-def resample_particles(particles):
-    do_stuff = 0
+def resample_particles(particles, weight):
+    particles = np.asarray(particles)
+    # print(sum(weight))
+    # print(len(weight))
+    # print(len(particles))
+    # print('-------------------------------------------')
+    new_particles = particles[np.random.choice(particles.shape[0], particles.shape[0], p=weight)]
+    return new_particles
 # ---------------------------------------------------------------------
 
 
 # Particle filter main ------------------------------------------------
-def compare(clusters, particles_poses):
+def compare(cam_pose, clusters, particles_poses):
+    global global_detected
+    weight = []
+    print(clusters['person'])
+    print('-------------------------------')
+    part2_id = dist_from_landmarks(cam_pose, clusters)
     for i in range(len(particles_poses)):
-        do_stuff = 0
+        part1_id = dist_from_landmarks(particles_poses[i], global_detected)
+        part_wt = get_weight(part1_id, part2_id)
+        weight.append(part_wt)
+    weight /= sum(weight)
+    return resample_particles(particles_poses, weight)
 # ---------------------------------------------------------------------
 
 
+# Visualize particles in rviz ------------------------------------------
 def display_particles(poses_pub):
     markerArray = MarkerArray()
     #print(poses_pub[1])
@@ -98,12 +123,15 @@ def display_particles(poses_pub):
         marker.color.b = 0.0
         marker.color.a = 1.0
 
-        marker.scale.z = 0.2
-        marker.scale.y = 0.2
-        marker.scale.x = 0.2
+        marker.scale.z = 0.1
+        marker.scale.y = 0.1
+        marker.scale.x = 0.1
         markerArray.markers.append(marker)
     map_publisher.publish(markerArray)
+# ---------------------------------------------------------------------
 
+
+# Updating particles --------------------------------------------------
 def callback(data):
     #print('checkpoint')
     global counter
@@ -111,21 +139,20 @@ def callback(data):
     x = data.pose.pose.position.x
     y = data.pose.pose.position.y
     #print([x, y])
-    if(counter % 5 == 0):
+    if(counter % 10 == 0):
         old_poses = []
-        dc = DetectionClustering(detected, min_samples=1)
-        #print([x, y])
-        #print(poses[1])
-
-        
+        dc = DetectionClustering(detected, min_samples=2)
+        if('person' in dc.clusters):
+            poses = compare([x, y], dc.clusters, poses)
         for i in range(len(poses)):
             old_poses.append([poses[i][0] + x, poses[i][1] + y])
-        
-        
         display_particles(old_poses)
         counter = 0
     counter += 1
+# ---------------------------------------------------------------------
 
+
+# Collecting objects --------------------------------------------------
 def update_key(key, val):
     global detected
     if(key in detected):
@@ -141,6 +168,8 @@ def collect(msg):
             val = [pos.x, pos.y, pos.z]
             key = detection_names[i]
             update_key(key, val)
+# ------------------------------------------------------------------------
+
 
 rospy.init_node('update_particles', anonymous=True)
 map_publisher = rospy.Publisher('visualization_marker_array', MarkerArray, queue_size=10)

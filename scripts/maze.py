@@ -328,73 +328,81 @@ class Particle(object):
 
         x = self.x + dx
         y = self.y + dy
-        gj1 = int(self.x / maze.grid_width)
-        gi1 = int(self.y / maze.grid_height)
-        gj2 = int(x / maze.grid_width)
-        gi2 = int(y / maze.grid_height)
+        #gj1 = int(self.x / maze.grid_width)
+        #gi1 = int(self.y / maze.grid_height)
+        #gj2 = int(x / maze.grid_width)
+        #gi2 = int(y / maze.grid_height)
 
-        # Check if the particle is still in the maze
-        if gi2 <= 0 or gi2 >= maze.num_rows - 1  or gj2 <= 0 or gj2 >= maze.num_cols - 1:
-            if(gi2 <= 0):
-                self.y = 1
-            elif(gi2 >= maze.num_rows - 1):
-                self.y = maze.num_rows - 2
-            else:
-                self.y = y
-            if(gj2 <= 0):
-                self.x = 1
-            elif(gj2 >= maze.num_cols - 1):
-                self.x = maze.num_cols - 2
-            else:
-                self.x = x
-            return 0
+        while((x >= 19 and x <= 241 and y >= 29 and y <= 301) or (x <= 1 or y <= 1 or x >= 268 or y >= 328)):
+            x = np.random.uniform(0, maze.width)
+            y = np.random.uniform(0, maze.height)
+        self.x = x
+        self.y = y
+            
+                
 
-        #return 0
-        # Move in the same grid
-        if gi1 == gi2 and gj1 == gj2:
-            self.x = x
-            self.y = y
-            return True
-        # Move across one grid vertically
-        elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 0:
-            if maze.maze[min(gi1, gi2), gj1] & 4 != 0:
-                self.x = x
-                return 0
-            else:
-                self.x = x
-                self.y = y
-                return True
-        # Move across one grid horizonally
-        elif abs(gi1 - gi2) == 0 and abs(gj1 - gj2) == 1:
-            if maze.maze[gi1, min(gj1, gj2)] & 2 != 0:
-                self.y = y
-                return 0
-            else:
-                self.x = x
-                self.y = y
-                return True
-        return 0
-        # Move across grids both vertically and horizonally
-        # elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 1:
+        # # Check if the particle is still in the maze
+        # if gi2 <= 0 or gi2 >= maze.num_rows - 1  or gj2 <= 0 or gj2 >= maze.num_cols - 1:
+        #     if(gi2 <= 0):
+        #         self.y = 1
+        #     elif(gi2 >= maze.num_rows - 1):
+        #         self.y = maze.num_rows - 2
+        #     else:
+        #         self.y = y
+        #     if(gj2 <= 0):
+        #         self.x = 1
+        #     elif(gj2 >= maze.num_cols - 1):
+        #         self.x = maze.num_cols - 2
+        #     else:
+        #         self.x = x
+        #     return 0
 
-        #     x0 = max(gj1, gj2) * maze.grid_width
-        #     y0 = (y - self.y) / (x - self.x) * (x0 - self.x) + self.y
-
-        #     if maze.maze[int(y0 // maze.grid_height), min(gj1, gj2)] & 2 != 0:
-        #         return False
-
-        #     y0 = max(gi1, gi2) * maze.grid_height
-        #     x0 = (x - self.x) / (y - self.y) * (y0 - self.y) + self.x
-
-        #     if maze.maze[min(gi1, gi2), int(x0 // maze.grid_width)] & 4 != 0:
-        #         return False
-
+        # #return 0
+        # # Move in the same grid
+        # if gi1 == gi2 and gj1 == gj2:
         #     self.x = x
         #     self.y = y
         #     return True
+        # # Move across one grid vertically
+        # elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 0:
+        #     if maze.maze[min(gi1, gi2), gj1] & 4 != 0:
+        #         self.x = x
+        #         return 0
+        #     else:
+        #         self.x = x
+        #         self.y = y
+        #         return True
+        # # Move across one grid horizonally
+        # elif abs(gi1 - gi2) == 0 and abs(gj1 - gj2) == 1:
+        #     if maze.maze[gi1, min(gj1, gj2)] & 2 != 0:
+        #         self.y = y
+        #         return 0
+        #     else:
+        #         self.x = x
+        #         self.y = y
+        #         return True
+        # return 0
+        # # Move across grids both vertically and horizonally
+        # # elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 1:
 
-        # else:
-        #     raise Exception('Unexpected collision detection.')
+        # #     x0 = max(gj1, gj2) * maze.grid_width
+        # #     y0 = (y - self.y) / (x - self.x) * (x0 - self.x) + self.y
+
+        # #     if maze.maze[int(y0 // maze.grid_height), min(gj1, gj2)] & 2 != 0:
+        # #         return False
+
+        # #     y0 = max(gi1, gi2) * maze.grid_height
+        # #     x0 = (x - self.x) / (y - self.y) * (y0 - self.y) + self.x
+
+        # #     if maze.maze[min(gi1, gi2), int(x0 // maze.grid_width)] & 4 != 0:
+        # #         return False
+
+        # #     self.x = x
+        # #     self.y = y
+        # #     return True
+
+        # # else:
+        # #     raise Exception('Unexpected collision detection.')
 
 
 class Robot(Particle):

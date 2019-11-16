@@ -31,8 +31,8 @@ class Particle_Filter(object):
         for i in range(num_particles):
             x = np.random.uniform(0, self.world.width)
             y = np.random.uniform(0, self.world.height)
-            if(not(x >= 20 and x <= 240 and y >= 30 and y <= 300)):
-                if(not(x <= 0 or y <= 0 or x >= 329 or y >= 269)):
+            if(not(x >= 19 and x <= 241 and y >= 29 and y <= 301)):
+                if(not(x <= 1 or y <= 1 or x >= 268 or y >= 328)):
                     self.particles.append(Particle(x = x, y = y, maze = self.world, sensor_limit = self.sensor_limit))
 
         time.sleep(1)
@@ -46,18 +46,16 @@ class Particle_Filter(object):
         #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
         #rospy.spin()
         while(1):
-            #print(self.tracker)
-            #dx = self.live_x - self.prev_x
-            #dy = self.live_y - self.prev_y
-            dx = 0
-            dy = 1
+            print(self.tracker)
+            dx = self.live_x - self.prev_x
+            dy = self.live_y - self.prev_y
             for particle in self.particles:
                 particle.try_move(maze=self.world, dx=dx, dy=dy)
             self.prev_x = self.live_x
             self.prev_y = self.live_y
 
             self.world.show_particles(particles = self.particles, show_frequency = self.particle_show_frequency)
-            #rospy.Subscriber('/stereo/odom', Odometry, self.callback)
+            rospy.Subscriber('/stereo/odom', Odometry, self.callback)
             #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
             #self.world.show_estimated_location(particles = self.particles)
             self.world.clear_objects()

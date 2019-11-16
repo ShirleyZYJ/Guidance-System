@@ -41,7 +41,7 @@ class Particle_Filter(object):
         self.detected = {}
         self.detection_names = rospy.get_param('/darknet_ros/yolo_model/detection_classes/names')
         #self.check()
-        #rospy.init_node('update_particles', anonymous=True)
+        rospy.init_node('update_particles', anonymous=True)
         #rospy.Subscriber('/stereo/odom', Odometry, self.callback)
         #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
         #rospy.spin()
@@ -50,12 +50,12 @@ class Particle_Filter(object):
             dx = self.live_x - self.prev_x
             dy = self.live_y - self.prev_y
             for particle in self.particles:
-                particle.try_move(maze=self.world, dx=dx, dy=dy)
+                particle.try_move(maze=self.world, dx=dx*10, dy=dy*10)
             self.prev_x = self.live_x
             self.prev_y = self.live_y
-
             self.world.show_particles(particles = self.particles, show_frequency = self.particle_show_frequency)
             rospy.Subscriber('/stereo/odom', Odometry, self.callback)
+            
             #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
             #self.world.show_estimated_location(particles = self.particles)
             self.world.clear_objects()

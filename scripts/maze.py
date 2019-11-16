@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 
 import numpy as np 
 import turtle
@@ -317,26 +318,38 @@ class Particle(object):
 
         return readings
 
-    def try_move(self, speed, maze, noisy = False):
+    def try_move(self, maze, dx, dy, noisy = False):
 
         heading = self.heading
         heading_rad = np.radians(heading)
 
-        dx = np.sin(heading_rad) * speed
-        dy = np.cos(heading_rad) * speed
+        #dx = np.sin(heading_rad) * speed
+        #dy = np.cos(heading_rad) * speed
 
         x = self.x + dx
         y = self.y + dy
-
-        gj1 = int(self.x // maze.grid_width)
-        gi1 = int(self.y // maze.grid_height)
-        gj2 = int(x // maze.grid_width)
-        gi2 = int(y // maze.grid_height)
+        gj1 = int(self.x / maze.grid_width)
+        gi1 = int(self.y / maze.grid_height)
+        gj2 = int(x / maze.grid_width)
+        gi2 = int(y / maze.grid_height)
 
         # Check if the particle is still in the maze
-        if gi2 < 0 or gi2 >= maze.num_rows or gj2 < 0 or gj2 >= maze.num_cols:
-            return False
+        if gi2 <= 0 or gi2 >= maze.num_rows - 1  or gj2 <= 0 or gj2 >= maze.num_cols - 1:
+            if(gi2 <= 0):
+                self.y = 1
+            elif(gi2 >= maze.num_rows - 1):
+                self.y = maze.num_rows - 2
+            else:
+                self.y = y
+            if(gj2 <= 0):
+                self.x = 1
+            elif(gj2 >= maze.num_cols - 1):
+                self.x = maze.num_cols - 2
+            else:
+                self.x = x
+            return 0
 
+        #return 0
         # Move in the same grid
         if gi1 == gi2 and gj1 == gj2:
             self.x = x
@@ -345,7 +358,8 @@ class Particle(object):
         # Move across one grid vertically
         elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 0:
             if maze.maze[min(gi1, gi2), gj1] & 4 != 0:
-                return False
+                self.x = x
+                return 0
             else:
                 self.x = x
                 self.y = y
@@ -353,32 +367,34 @@ class Particle(object):
         # Move across one grid horizonally
         elif abs(gi1 - gi2) == 0 and abs(gj1 - gj2) == 1:
             if maze.maze[gi1, min(gj1, gj2)] & 2 != 0:
-                return False
+                self.y = y
+                return 0
             else:
                 self.x = x
                 self.y = y
                 return True
+        return 0
         # Move across grids both vertically and horizonally
-        elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 1:
+        # elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 1:
 
-            x0 = max(gj1, gj2) * maze.grid_width
-            y0 = (y - self.y) / (x - self.x) * (x0 - self.x) + self.y
+        #     x0 = max(gj1, gj2) * maze.grid_width
+        #     y0 = (y - self.y) / (x - self.x) * (x0 - self.x) + self.y
 
-            if maze.maze[int(y0 // maze.grid_height), min(gj1, gj2)] & 2 != 0:
-                return False
+        #     if maze.maze[int(y0 // maze.grid_height), min(gj1, gj2)] & 2 != 0:
+        #         return False
 
-            y0 = max(gi1, gi2) * maze.grid_height
-            x0 = (x - self.x) / (y - self.y) * (y0 - self.y) + self.x
+        #     y0 = max(gi1, gi2) * maze.grid_height
+        #     x0 = (x - self.x) / (y - self.y) * (y0 - self.y) + self.x
 
-            if maze.maze[min(gi1, gi2), int(x0 // maze.grid_width)] & 4 != 0:
-                return False
+        #     if maze.maze[min(gi1, gi2), int(x0 // maze.grid_width)] & 4 != 0:
+        #         return False
 
-            self.x = x
-            self.y = y
-            return True
+        #     self.x = x
+        #     self.y = y
+        #     return True
 
-        else:
-            raise Exception('Unexpected collision detection.')
+        # else:
+        #     raise Exception('Unexpected collision detection.')
 
 
 class Robot(Particle):

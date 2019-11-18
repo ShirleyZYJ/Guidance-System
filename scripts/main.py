@@ -7,7 +7,7 @@ import time
 import rospy
 import math
 
-from maze import Maze, Particle
+from maze import Maze, Particle, WeightedDistribution, weight_gaussian_kernel
 from nav_msgs.msg import Odometry
 from detection_clustering import DetectionClustering
 from geometry_msgs.msg import PoseArray, Pose
@@ -26,7 +26,7 @@ class Particle_Filter(object):
         self.live_y = 0
         self.counter = 0
         self.tracker = 0
-
+        self.dc = None
         self.particles = list()
         for i in range(num_particles):
             x = np.random.uniform(0, self.world.width)
@@ -45,24 +45,69 @@ class Particle_Filter(object):
         #rospy.Subscriber('/stereo/odom', Odometry, self.callback)
         #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
         #rospy.spin()
+        readings_robot = []
         while(1):
-            print(self.tracker)
+            #print(self.tracker)
             dx = self.live_x - self.prev_x
             dy = self.live_y - self.prev_y
+            
+
+            # Particle filtering ------------------------------------------------------------------------------------------------------------------------------------------------
+            
+            self.dc = DetectionClustering(self.detected, min_samples=10)
+            if('person' in self.dc.clusters):
+                print(self.dc.clusters)
+                readings_robot = self.zed_sensor_reading()
+                #print('hew')
+                #print(readings_robot)
+                particle_weight_total = 0
+                for particle in self.particles:
+                    readings_particle = particle.read_sensor(maze=self.world)
+                    particle.weight = weight_gaussian_kernel(x1 = readings_robot, x2 = readings_particle)
+                    particle_weight_total += particle.weight
+                
+                if particle_weight_total == 0:
+                    particle_weight_total = 1e-8
+
+                for particle in self.particles:
+                    particle.weight /= particle_weight_total
+                
+                distribution = WeightedDistribution(particles = self.particles)
+                particles_new = list()
+                
+                for i in range(num_particles):
+
+                    particle = distribution.random_select()
+
+                    if particle is None:
+                        x = np.random.uniform(0, self.world.width)
+                        y = np.random.uniform(0, self.world.height)
+                        while((x >= 19 and x <= 241 and y >= 29 and y <= 301) or (x <= 1 or y <= 1 or x >= 268 or y >= 328)):
+                            x = np.random.uniform(0, self.world.width)
+                            y = np.random.uniform(0, self.world.height)
+                        particles_new.append(Particle(x = x, y = y, maze = self.world, sensor_limit = self.sensor_limit))
+
+                    else:
+                        particles_new.append(Particle(x = particle.x, y = particle.y, maze = self.world, heading = particle.heading, sensor_limit = self.sensor_limit, noisy = True))
+                
+                self.particles = particles_new
+
+            # END ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
             for particle in self.particles:
                 particle.try_move(maze=self.world, dx=dx*10, dy=dy*10)
+
             self.prev_x = self.live_x
             self.prev_y = self.live_y
             self.world.show_particles(particles = self.particles, show_frequency = self.particle_show_frequency)
             rospy.Subscriber('/stereo/odom', Odometry, self.callback)
-            
-            #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
+            rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
             #self.world.show_estimated_location(particles = self.particles)
             self.world.clear_objects()
             #x=0
 
     def callback(self, data):
-        self.tracker += 1
+        #self.tracker += 1
         self.live_x = data.pose.pose.position.x
         self.live_y = data.pose.pose.position.y
 
@@ -80,6 +125,13 @@ class Particle_Filter(object):
                 val = [pos.x, pos.y, pos.z]
                 key = self.detection_names[i]
                 self.update_key(key, val)
+    
+    def zed_sensor_reading(self):
+        readings_robot = []
+        for p in self.dc.clusters['person']:
+            dist = math.sqrt(math.pow((p[0] - self.live_x), 2) + math.pow((p[1] - self.live_y), 2))
+            readings_robot.append(dist)
+        return readings_robot
     # ------------------------------------------------------------------------
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ import turtle
 import bisect
 import argparse
 import random
+import math
 
 class Maze(object):
 
@@ -233,16 +234,6 @@ class Maze(object):
         turtle.stamp()
         turtle.update()
 
-    def show_robot(self, robot):
-
-        turtle.color('green')
-        turtle.shape('turtle')
-        turtle.shapesize(0.7, 0.7)
-        turtle.setposition((robot.x, robot.y))
-        turtle.setheading(90 - robot.heading)
-        turtle.stamp()
-        turtle.update()
-
     def clear_objects(self):
         turtle.clearstamps()
 
@@ -293,29 +284,15 @@ class Particle(object):
         return x + np.random.normal(0, std)
 
     def read_sensor(self, maze):
-
-        readings = maze.distance_to_walls(coordinates = (self.x, self.y))
-
-        heading = self.heading % 360
-
-        # Remove the compass from particle
-        if heading >= 45 and heading < 135:
-            readings = readings
-        elif heading >= 135 and heading < 225:
-            readings = readings[-1:] + readings[:-1]
-            #readings = [readings[3], readings[0], readings[1], readings[2]]
-        elif heading >= 225 and heading < 315:
-            readings = readings[-2:] + readings[:-2]
-            #readings = [readings[2], readings[3], readings[0], readings[1]]
-        else:
-            readings = readings[-3:] + readings[:-3]
-            #readings = [readings[1], readings[2], readings[3], readings[0]]
-
-        if self.sensor_limit is not None:
-            for i in range(len(readings)):
-                if readings[i] > self.sensor_limit:
-                    readings[i] = self.sensor_limit
-
+        readings = []
+        d1 = math.sqrt(math.pow((self.x - 210), 2) + math.pow((self.y - 30), 2))
+        d2 = math.sqrt(math.pow((self.x - 260), 2) + math.pow((self.y - 120), 2))
+        d3 = math.sqrt(math.pow((self.x - 250), 2) + math.pow((self.y - 320), 2))
+        d4 = math.sqrt(math.pow((self.x - 0), 2) + math.pow((self.y - 250), 2))
+        readings.append(d1)
+        readings.append(d2)
+        readings.append(d3)
+        readings.append(d4)
         return readings
 
     def try_move(self, maze, dx, dy, noisy = False):
@@ -323,86 +300,14 @@ class Particle(object):
         heading = self.heading
         heading_rad = np.radians(heading)
 
-        #dx = np.sin(heading_rad) * speed
-        #dy = np.cos(heading_rad) * speed
-
         x = self.x + dx
         y = self.y + dy
-        #gj1 = int(self.x / maze.grid_width)
-        #gi1 = int(self.y / maze.grid_height)
-        #gj2 = int(x / maze.grid_width)
-        #gi2 = int(y / maze.grid_height)
 
         while((x >= 19 and x <= 241 and y >= 29 and y <= 301) or (x <= 1 or y <= 1 or x >= 268 or y >= 328)):
             x = np.random.uniform(0, maze.width)
             y = np.random.uniform(0, maze.height)
         self.x = x
         self.y = y
-            
-                
-
-        # # Check if the particle is still in the maze
-        # if gi2 <= 0 or gi2 >= maze.num_rows - 1  or gj2 <= 0 or gj2 >= maze.num_cols - 1:
-        #     if(gi2 <= 0):
-        #         self.y = 1
-        #     elif(gi2 >= maze.num_rows - 1):
-        #         self.y = maze.num_rows - 2
-        #     else:
-        #         self.y = y
-        #     if(gj2 <= 0):
-        #         self.x = 1
-        #     elif(gj2 >= maze.num_cols - 1):
-        #         self.x = maze.num_cols - 2
-        #     else:
-        #         self.x = x
-        #     return 0
-
-        # #return 0
-        # # Move in the same grid
-        # if gi1 == gi2 and gj1 == gj2:
-        #     self.x = x
-        #     self.y = y
-        #     return True
-        # # Move across one grid vertically
-        # elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 0:
-        #     if maze.maze[min(gi1, gi2), gj1] & 4 != 0:
-        #         self.x = x
-        #         return 0
-        #     else:
-        #         self.x = x
-        #         self.y = y
-        #         return True
-        # # Move across one grid horizonally
-        # elif abs(gi1 - gi2) == 0 and abs(gj1 - gj2) == 1:
-        #     if maze.maze[gi1, min(gj1, gj2)] & 2 != 0:
-        #         self.y = y
-        #         return 0
-        #     else:
-        #         self.x = x
-        #         self.y = y
-        #         return True
-        # return 0
-        # # Move across grids both vertically and horizonally
-        # # elif abs(gi1 - gi2) == 1 and abs(gj1 - gj2) == 1:
-
-        # #     x0 = max(gj1, gj2) * maze.grid_width
-        # #     y0 = (y - self.y) / (x - self.x) * (x0 - self.x) + self.y
-
-        # #     if maze.maze[int(y0 // maze.grid_height), min(gj1, gj2)] & 2 != 0:
-        # #         return False
-
-        # #     y0 = max(gi1, gi2) * maze.grid_height
-        # #     x0 = (x - self.x) / (y - self.y) * (y0 - self.y) + self.x
-
-        # #     if maze.maze[min(gi1, gi2), int(x0 // maze.grid_width)] & 4 != 0:
-        # #         return False
-
-        # #     self.x = x
-        # #     self.y = y
-        # #     return True
-
-        # # else:
-        # #     raise Exception('Unexpected collision detection.')
 
 
 class Robot(Particle):
@@ -471,10 +376,15 @@ def euclidean_distance(x1, x2):
 
     return np.linalg.norm(np.asarray(x1) - np.asarray(x2))
 
-def weight_gaussian_kernel(x1, x2, std = 10):
-
-    distance = euclidean_distance(x1 = x1, x2 = x2)
-    return np.exp(-distance ** 2 / (2 * std))
+def weight_gaussian_kernel(x1, x2):
+    #print('haw')
+    #print(x1)
+    dist = 0
+    x2 = np.asarray(x2)
+    wt = 0
+    for i in range(len(x1)):
+        wt += np.min(np.abs(np.subtract(x2, x1[i])))
+    return wt
 
 
 

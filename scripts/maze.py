@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+#WTF IS GOING ON !!!!!!!!!!!!!!!!!!!!!!!!!!
+
 import numpy as np 
 import turtle
 import bisect
@@ -17,7 +19,7 @@ class Maze(object):
 
         self.height = self.num_rows * self.grid_height
         self.width = self.num_cols * self.grid_width
-        self.landmarks = [[260, 150], [260, 120], [250, 320], [0, 250], [60, 0], [210, 30]]
+        self.landmarks = [[260, 120], [250, 320], [0, 250], [60, 0], [210, 30]]
         self.turtle_registration()
 
     def turtle_registration(self):
@@ -260,25 +262,54 @@ class Particle(object):
         readings = []
         for i in range(len(self.maze.landmarks)):
             d = math.sqrt(math.pow((self.x - self.maze.landmarks[i][0]), 2) + math.pow((self.y - self.maze.landmarks[i][1]), 2))
-            #if(not self.check_intersect(self.x, self.y, self.maze.landmarks[i][0], self.maze.landmarks[i][1])):
             d = d / 10.0
+            #if(not self.check_intersect(self.x, self.y, self.maze.landmarks[i][0], self.maze.landmarks[i][1])):
             readings.append(d)
         return readings
 
     def check_intersect(self, x0, y0, x1, y1):
         #return False
-        c1 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[32, 32], D=[238, 32])
-        c2 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[32, 32], D=[32, 298])
-        c3 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[238, 298], D=[32, 298])
-        c4 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[238, 32], D=[238, 298])
+        c1 = self.doIntersect(A=[x0, y0], B=[x1, y1], C=[32, 32], D=[238, 32])
+        c2 = self.doIntersect(A=[x0, y0], B=[x1, y1], C=[32, 32], D=[32, 298])
+        c3 = self.doIntersect(A=[x0, y0], B=[x1, y1], C=[238, 298], D=[32, 298])
+        c4 = self.doIntersect(A=[x0, y0], B=[x1, y1], C=[238, 32], D=[238, 298])
         return c1 or c2 or c3 or c4
+    
+    def onSegment(self, A, B, C):
+        if (B[0] <= max(A[0], C[0]) and B[0] >= min(A[0], C[0]) and B[1] <= max(A[1], C[1]) and B[1] >= min(A[1], C[1])): 
+            return True 
+        return False
+     
+    def orientation(self, A, B, C):
+        val = (B[1] - A[1]) * (C[0] - B[0]) - (B[0] - A[0]) * (C[1] - B[1])
+        if (val == 0): 
+            return 0 
+        if (val > 0):  
+            return 1 
+        return 2
 
-    def line_intersect(self,A,B,C,D):
-	    return self.ccw(A,C,D) != self.ccw(B,C,D) and self.ccw(A,B,C) != self.ccw(A,B,D)
+    def doIntersect(self, A, B, C, D):  
+        o1 = self.orientation(A=A, B=B, C=C) 
+        o2 = self.orientation(A=A, B=B, C=D) 
+        o3 = self.orientation(A=C, B=D, C=A) 
+        o4 = self.orientation(A=C, B=D, C=B) 
+        if (o1 != o2 and o3 != o4): 
+            return True
 
-    def ccw(self,A,B,C):
-	    return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
+        if (o1 == 0 and onSegment(A=A, B=C, C=B)): 
+            return True 
 
+        if (o2 == 0 and onSegment(A=A, B=D, C=B)): 
+            return True 
+     
+        if (o3 == 0 and onSegment(A=C, B=A, C=D)): 
+            return True 
+     
+        if (o4 == 0 and onSegment(A=C, B=B, C=D)): 
+            return True 
+    
+        return False 
+    
     def try_move(self, maze, dx, dy, noisy = False):
         angle = math.radians(self.heading)        
         x = self.x + (dx * math.cos(angle) - dy * math.sin(angle))
@@ -315,13 +346,16 @@ def euclidean_distance(x1, x2):
     return np.linalg.norm(np.asarray(x1) - np.asarray(x2))
 
 def weight_gaussian_kernel(x1, x2):
+    alpha = 0.7
     dist = 0
     x2 = np.asarray(x2)
     wt = 0
+    wt2 = 0
     for i in range(len(x1)):
-        wt += np.min(np.abs(np.subtract(x2, x1[i])))
-    wt = 1.0 / wt
-    return wt
+        wt += 1.0 / np.min(np.abs(np.subtract(x2, x1[i])))
+        wt2 += np.min(np.abs(np.subtract(x2, x1[i])))
+    wt2 = ((1 - alpha) / wt2) + (alpha * wt)
+    return wt2
 
 
 

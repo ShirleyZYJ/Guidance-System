@@ -17,7 +17,7 @@ class Maze(object):
 
         self.height = self.num_rows * self.grid_height
         self.width = self.num_cols * self.grid_width
-
+        self.landmarks = [[260, 150], [260, 120], [250, 320], [0, 250], [60, 0], [210, 30]]
         self.turtle_registration()
 
     def turtle_registration(self):
@@ -37,7 +37,7 @@ class Maze(object):
         # up
         for i in range(27):
             self.maze[0, i] |= 1
-        # right
+        # right, min_samples=10
         for i in range(33):
             self.maze[i, 26] |= 2
         # down
@@ -72,45 +72,6 @@ class Maze(object):
         cell_value = self.maze[cell[0], cell[1]]
         return (cell_value & 1 == 0, cell_value & 2 == 0, cell_value & 4 == 0, cell_value & 8 == 0)
 
-    def distance_to_walls(self, coordinates):
-        '''
-        Measure the distance of coordinates to nearest walls at four directions.
-        Return:
-        (up, right, down, left)
-        '''
-
-        x, y = coordinates
-
-        i = int(y // self.grid_height)
-        j = int(x // self.grid_width)
-        d1 = y - y // self.grid_height * self.grid_height
-        while self.permissibilities(cell = (i,j))[0]:
-            i -= 1
-            d1 += self.grid_height
-
-        i = int(y // self.grid_height)
-        j = int(x // self.grid_width)
-        d2 = self.grid_width - (x - x // self.grid_width * self.grid_width)
-        while self.permissibilities(cell = (i,j))[1]:
-            j += 1
-            d2 += self.grid_width
-
-        i = int(y // self.grid_height)
-        j = int(x // self.grid_width)
-        d3 = self.grid_height - (y - y // self.grid_height * self.grid_height)
-        while self.permissibilities(cell = (i,j))[2]:
-            i += 1
-            d3 += self.grid_height
-
-        i = int(y // self.grid_height)
-        j = int(x // self.grid_width)
-        d4 = x - x // self.grid_width * self.grid_width
-        while self.permissibilities(cell = (i,j))[3]:
-            j -= 1
-            d4 += self.grid_width
-
-        return [d1, d2, d3, d4]
-
     def show_maze(self):
 
         turtle.setworldcoordinates(0, 0, self.width, self.height)
@@ -135,6 +96,8 @@ class Maze(object):
                     wally.up()
                 wally.pencolor('black')
                 if(i == 3 and (j == 21 or j == 20)):
+                    wally.pencolor('yellow')
+                if(i == 0 and (j == 6 or j == 7)):
                     wally.pencolor('yellow')
                 wally.forward(self.grid_width)
                 
@@ -242,12 +205,9 @@ class Particle(object):
 
     def __init__(self, x, y, maze, heading = None, weight = 1.0, sensor_limit = None, noisy = False):
 
-        if heading is None:
-            heading = np.random.uniform(0,360)
-
         self.x = x
         self.y = y
-        self.heading = heading
+        self.heading = np.random.uniform(0,360)
         self.weight = weight
         self.maze = maze
         self.sensor_limit = sensor_limit
@@ -260,6 +220,19 @@ class Particle(object):
 
         self.fix_invalid_particles()
 
+    def get_heading(self):
+
+        if(self.x > 30 and self.x < 240 and self.y > 0 and self.y < 30):
+            heading = 0
+        elif(self.x > 240 and self.x < 270 and self.y > 30 and self.y < 300):
+            heading = 90
+        elif(self.x > 30 and self.x < 240 and self.y > 300 and self.y < 330):
+            heading = 180
+        elif(self.x > 0 and self.x < 30 and self.y > 30 and self.y < 300):
+            heading = 270
+        else:
+            heading = heading = np.random.uniform(0,360)
+        return heading
 
     def fix_invalid_particles(self):
 
@@ -285,73 +258,38 @@ class Particle(object):
 
     def read_sensor(self, maze):
         readings = []
-        d1 = math.sqrt(math.pow((self.x - 210), 2) + math.pow((self.y - 30), 2))
-        d2 = math.sqrt(math.pow((self.x - 260), 2) + math.pow((self.y - 120), 2))
-        d3 = math.sqrt(math.pow((self.x - 250), 2) + math.pow((self.y - 320), 2))
-        d4 = math.sqrt(math.pow((self.x - 0), 2) + math.pow((self.y - 250), 2))
-        readings.append(d1)
-        readings.append(d2)
-        readings.append(d3)
-        readings.append(d4)
+        for i in range(len(self.maze.landmarks)):
+            d = math.sqrt(math.pow((self.x - self.maze.landmarks[i][0]), 2) + math.pow((self.y - self.maze.landmarks[i][1]), 2))
+            #if(not self.check_intersect(self.x, self.y, self.maze.landmarks[i][0], self.maze.landmarks[i][1])):
+            d = d / 10.0
+            readings.append(d)
         return readings
 
+    def check_intersect(self, x0, y0, x1, y1):
+        #return False
+        c1 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[32, 32], D=[238, 32])
+        c2 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[32, 32], D=[32, 298])
+        c3 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[238, 298], D=[32, 298])
+        c4 = self.line_intersect(A=[x0, y0], B=[x1, y1], C=[238, 32], D=[238, 298])
+        return c1 or c2 or c3 or c4
+
+    def line_intersect(self,A,B,C,D):
+	    return self.ccw(A,C,D) != self.ccw(B,C,D) and self.ccw(A,B,C) != self.ccw(A,B,D)
+
+    def ccw(self,A,B,C):
+	    return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
+
     def try_move(self, maze, dx, dy, noisy = False):
-
-        heading = self.heading
-        heading_rad = np.radians(heading)
-
-        x = self.x + dx
-        y = self.y + dy
+        angle = math.radians(self.heading)        
+        x = self.x + (dx * math.cos(angle) - dy * math.sin(angle))
+        y = self.y + (dx * math.sin(angle) + dy * math.cos(angle))
 
         while((x >= 19 and x <= 241 and y >= 29 and y <= 301) or (x <= 1 or y <= 1 or x >= 268 or y >= 328)):
             x = np.random.uniform(0, maze.width)
             y = np.random.uniform(0, maze.height)
         self.x = x
         self.y = y
-
-
-class Robot(Particle):
-
-    def __init__(self, x, y, maze, heading = None, speed = 1.0, sensor_limit = None, noisy = True):
-
-        super(Robot, self).__init__(x = x, y = y, maze = maze, heading = heading, sensor_limit = sensor_limit, noisy = noisy)
-        self.step_count = 0
-        self.noisy = noisy
-        self.time_step = 0
-        self.speed = speed
-
-    def choose_random_direction(self):
-
-        self.heading = np.random.uniform(0, 360)
-
-    def add_sensor_noise(self, x, z = 0.05):
-
-        readings = list(x)
-
-        for i in range(len(readings)):
-            std = readings[i] * z / 2
-            readings[i] = readings[i] + np.random.normal(0, std)
-
-        return readings
-
-    def read_sensor(self, maze):
-
-        # Robot has error in reading the sensor while particles do not.
-
-        readings = super(Robot, self).read_sensor(maze = maze)
-        if self.noisy == True:
-            readings = self.add_sensor_noise(x = readings)
-
-        return readings
-
-    def move(self, maze):
-
-        while True:
-            self.time_step += 1
-            if self.try_move(speed = self.speed, maze = maze, noisy = False):
-                break
-            self.choose_random_direction()
-
+        
 
 class WeightedDistribution(object):
 
@@ -377,13 +315,12 @@ def euclidean_distance(x1, x2):
     return np.linalg.norm(np.asarray(x1) - np.asarray(x2))
 
 def weight_gaussian_kernel(x1, x2):
-    #print('haw')
-    #print(x1)
     dist = 0
     x2 = np.asarray(x2)
     wt = 0
     for i in range(len(x1)):
         wt += np.min(np.abs(np.subtract(x2, x1[i])))
+    wt = 1.0 / wt
     return wt
 
 

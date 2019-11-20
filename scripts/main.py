@@ -28,6 +28,8 @@ class Particle_Filter(object):
         self.tracker = 0
         self.dc = None
         self.particles = list()
+
+        # Initilizing particles randomly -------------------------------------------------------------------------------------
         for i in range(num_particles):
             x = np.random.uniform(0, self.world.width)
             y = np.random.uniform(0, self.world.height)
@@ -37,26 +39,28 @@ class Particle_Filter(object):
 
         time.sleep(1)
         self.world.show_maze()
+        
 
+        # Initializing pretrained objects -------------------------------------------------------------------------------------
+        
         self.detected = {}
         self.detection_names = rospy.get_param('/darknet_ros/yolo_model/detection_classes/names')
-        #self.check()
         rospy.init_node('update_particles', anonymous=True)
-        #rospy.Subscriber('/stereo/odom', Odometry, self.callback)
-        #rospy.Subscriber('/cluster_decomposer/centroid_pose_array', PoseArray, self.collect)
-        #rospy.spin()
+        
         readings_robot = []
+
+        # Moving particles ----------------------------------------------------------------------------------------------------
+
         while(1):
             #print(self.tracker)
             dx = self.live_x - self.prev_x
             dy = self.live_y - self.prev_y
             
-
             # Particle filtering ------------------------------------------------------------------------------------------------------------------------------------------------
             
-            self.dc = DetectionClustering(self.detected, min_samples=10)
+            self.dc = DetectionClustering(self.detected.copy())
             if('person' in self.dc.clusters):
-                print(self.dc.clusters)
+                print(self.dc.clusters['person'])
                 readings_robot = self.zed_sensor_reading()
                 #print('hew')
                 #print(readings_robot)
@@ -140,7 +144,7 @@ if __name__ == '__main__':
 
     window_width = 500
     window_height = 500
-    num_particles = 2000
+    num_particles = 3000
     sensor_limit_ratio = 0.3
     grid_height = 10
     grid_width = 10
